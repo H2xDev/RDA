@@ -1,0 +1,22 @@
+{
+  "name": "smartapp-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "microbundle -f umd",
+    "serve": "microbundle watch -f umd"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "microbundle": "^0.14.1",
+    "tsc": "^2.0.3",
+    "typescript": "^4.4.4"
+  },
+  "publishConfig": {
+    "source": "main.ts",
+    "main": "public/app.js"
+  }
+}

@@ -1,0 +1,28 @@
+Engine Development:
+    ✔ Develop renderer @done(21-11-10 21:45)
+    ✔ Develop scene controller @done(21-11-10 21:45)
+    ✔ Develop scene class @done(21-11-10 21:45)
+    ✔ Develop camera class @done(21-11-10 21:45)
+    ✔ Develop entity class @done(21-11-10 21:45)
+    ✔ Develop input system @done(21-11-10 21:45)
+    ☐ Develop sprite class
+    ☐ Develop actor class
+    ☐ Develop resource loading login
+    ☐ Develop map loader
+    ☐ Integrate physics into the engine
+    
+Mechanics:
+    ☐ Develop player actor
+        ☐ Movement
+        ☐ Jumping
+        ☐ Draw sprite
+        ☐ Draw animation
+
+    ☐ Develop button object
+        ☐ Add "finging" mechanic to this object
+        ☐ Add activation mechanics
+
+Test Level:
+    ☐ Draw base level
+    ☐ Split level resources to files
+    ☐ Develop base level
