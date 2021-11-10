@@ -35,6 +35,8 @@ class KInput extends EventEmitter {
         if (typeof code === 'string') {
             code = code.charCodeAt(0);
         }
+
+        return this.state[code] !== 0;
     }
 }
 

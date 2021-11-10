@@ -1,5 +1,6 @@
 import { Entity } from "./entity";
 export declare class Camera extends Entity {
+    private context;
     resolution: [number, number];
     originalResolution: [number, number];
     position: {
@@ -11,8 +12,8 @@ export declare class Camera extends Entity {
     entityToFollow?: Entity;
     followSmoothness: number;
     private sceneUpdate;
-    constructor();
-    private overrideRendering;
+    constructor(context: CanvasRenderingContext2D);
+    private overwriteRendering;
     private applyResolution;
     private get actualZoom();
     private moveCameraToTarget;

@@ -1,6 +1,6 @@
 import { Entity, EntityEvents } from "./entity";
 import { EventEmitter } from "./event";
-import { generateId } from "./generateId";
+import { generateId } from "./utils/generateId";
 
 export enum SceneEvents {
     LOAD, DESTROY

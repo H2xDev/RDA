@@ -1,4 +1,3 @@
-import { context as c, context} from "../game/engine";
 import { Entity, EntityEvents } from "./entity";
 
 export class Camera extends Entity {
@@ -15,20 +14,22 @@ export class Camera extends Entity {
 
     private sceneUpdate!: () => void;
 
-    constructor() {
+    constructor(private context: CanvasRenderingContext2D) {
         super();
         this.once(EntityEvents.SPAWN, () => {
             this.applyResolution();
-            this.overrideRendering();
+            this.overwriteRendering();
         });
     }
 
-    private overrideRendering() {
+    private overwriteRendering() {
         this.sceneUpdate = this.scene.update.bind(this.scene);
         this.scene.update = this.update.bind(this);
     }
 
     private applyResolution() {
+        const { context } = this;
+
         this.resolution = [
             context.canvas.width,
             context.canvas.height,
@@ -57,6 +58,7 @@ export class Camera extends Entity {
     }
 
     public update() {
+        const { context: c } = this;
         if (!this.sceneUpdate) return;
 
         this.moveCameraToTarget();
@@ -68,6 +70,7 @@ export class Camera extends Entity {
     }
 
     public applyCameraTransform() {
+        const { context: c } = this;
         c.translate(this.resolution[0] / 2, this.resolution[1] / 2);
         c.rotate(this.rotation / 180 * Math.PI);
         c.scale(...this.actualZoom);
