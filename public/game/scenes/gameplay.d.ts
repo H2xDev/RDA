@@ -1,6 +1,7 @@
 import { Scene } from "../../core/scene";
 declare class _Gameplay extends Scene {
     private camera;
+    private player;
     start(): void;
     update(): void;
 }

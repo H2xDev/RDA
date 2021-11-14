@@ -24,7 +24,7 @@ export class Renderer extends EventEmitter<RendererEventList> {
 
     private options!: RendererOptions;
 
-    constructor(options?: RendererOptions) {
+    constructor(options?: Partial<RendererOptions>) {
         super();
 
         this.setOptions(options || {});

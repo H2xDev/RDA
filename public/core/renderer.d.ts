@@ -11,7 +11,7 @@ export declare class Renderer extends EventEmitter<RendererEventList> {
     domElement: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
     private options;
-    constructor(options?: RendererOptions);
+    constructor(options?: Partial<RendererOptions>);
     setOptions(newOptions: Partial<RendererOptions>): void;
     render(func: RenderFunction): void;
     clear(): void;
