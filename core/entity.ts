@@ -7,6 +7,9 @@ export enum EntityEvents {
 
 export class Entity extends EventEmitter<EntityEvents> {
     protected scene!: Scene;
+
+    public id!: string;
+
     public position = { x: 0, y: 0 };
 
     public update() {}

@@ -1,22 +1,14 @@
-import { EventEmitter } from "./event";
 import {Graphics} from "./graphics";
 import {Resource} from "./resourceManager";
-import {ResourceEvents} from "./types/fileManagerEvents.enum";
 
 const { round, PI } = Math;
 
 interface SpriteOptions {
     frameSize: [number, number];
     offset?: [number, number];
-    scale: [number, number];
+    scale?: [number, number];
     speed?: number;
-}
-
-interface SpriteState {
-    frame: number,
-    offset: [number, number],
-    scale: [1, 1],
-    rotation: number,
+    maxFrames?: number;
 }
 
 const DEFAULT_SPRITE_OPTIONS: Partial<SpriteOptions> = {
@@ -26,14 +18,16 @@ const DEFAULT_SPRITE_OPTIONS: Partial<SpriteOptions> = {
 
 export default class Sprite extends Resource {
     private image = new Image();
-    private options!: SpriteOptions;
-
-    public state: SpriteState = {
-        frame: 0,
-        offset: [0, 0],
-        scale: [1, 1],
-        rotation: 0,
-    };
+    public options!: SpriteOptions;
+    
+    public speed = 1;
+    public frame = 0;
+    public scale: [number, number] = [1, 1];
+    public angle = 0;
+    public offset: [number, number] = [0, 0];
+    public frameSize: [number, number] = [1, 1];
+    public maxFrames = 0;
+    public transform!: DOMMatrix;
 
     constructor(
         private filename: string,
@@ -44,17 +38,25 @@ export default class Sprite extends Resource {
     }
 
     private setOptions(options: SpriteOptions) {
-        this.options = {
+        const updatedOptions = {
             ...DEFAULT_SPRITE_OPTIONS,
-            ...this.options,
             ...options,
-        }
+        };
+
+        this.speed = updatedOptions.speed || this.speed;
+        this.frameSize = updatedOptions.frameSize || this.frameSize;
+        this.scale = updatedOptions.scale || this.scale;
+        this.offset = updatedOptions.offset || this.offset;
+        this.maxFrames = updatedOptions.maxFrames || 0;
 
         this.loadImage();
     }
 
     private loadImage() {
         const onImageLoaded = () => {
+            const [fw, fh] = this.frameSize;
+            const { width, height } = this.image;
+            this.maxFrames = this.maxFrames || ((width / fw) * (height / fh)); 
             this.trigger(Resource.Events.LOADED, this);
         }
         this.image.src = `/sprites/${this.filename}`    
@@ -64,11 +66,11 @@ export default class Sprite extends Resource {
     private get frameState(): [number, number, number, number] {
         if (!this.isLoaded) return [0, 0, 0, 0];
 
-        let { frame } = this.state;
+        let { frame } = this;
         frame = round(frame);
 
         const { width, height } = this.image;
-        const [fw, fh] = this.options.frameSize;
+        const [fw, fh] = this.frameSize;
         const mx = ((width / fw) >> 0);
         const my = ((height / fh) >> 0);
 
@@ -81,37 +83,51 @@ export default class Sprite extends Resource {
         return [fx, fy, fw, fh];
     }
 
-    private applyTransform(x: number, y: number) {
-        const { rotation, scale, offset } = this.state;
+    public useTransform(x: number, y: number) {
+        const { angle, scale, offset } = this;
         const [ ox, oy ] = offset;
         const [ sx, sy ] = scale;
         const { Context: c } = Graphics;
 
-        c.rotate(rotation / 180 * PI);
+        c.translate(x, y);
+        c.rotate(angle / 180 * PI);
         c.scale(sx, sy);
-        c.translate(x - ox, y - oy);
+        c.translate(- ox, - oy);
+        this.transform = c.getTransform();
     }
 
-    render(x: number, y: number) {
+    public render(x: number, y: number) {
         if (!this.isLoaded) return;
 
-        const { image, state, options, frameState } = this;
-        const { speed = 1 } = options;
+        const { image, frameState, speed, frameSize } = this;
         const { Context: c } = Graphics;
-        const [fw, fh] = options.frameSize;
+        const [ fw, fh ] = frameSize;
 
         c.save();
-        this.applyTransform(x, y);
+        this.useTransform(x, y);
         c.drawImage(
             image, ...frameState,
             0, 0, fw, fh,
         );
         c.restore();
 
-        state.frame += speed;
+        this.frame += speed;
+    }
+
+    public get frameDrawingArgs() {
+        const { image, frameState, frameSize } = this;
+        const [ fw, fh ] = frameSize;
+
+        return [image, ...frameState, 0, 0, fw, fh];
     }
 
     public clone() {
-        return new Sprite(this.filename, this.options);
+        return new Sprite(this.filename, {
+            offset: this.offset,
+            scale: this.scale,
+            speed: this.speed,
+            frameSize: this.frameSize,
+            maxFrames: this.maxFrames,
+        });
     }
 }

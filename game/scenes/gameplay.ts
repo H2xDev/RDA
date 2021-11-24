@@ -1,26 +1,33 @@
 import { Bodies, Composite } from "matter-js";
 import { Camera } from "../../core/camera";
+import {EntityEvents} from "../../core/entity";
 import { DEFAULT_RESOURCE_MANAGER } from "../../core/resourceManager";
 import { Scene } from "../../core/scene";
 import { context as c } from "../engine";
-import {Player} from "../entities/player";
+import { Player } from "../entities/player";
+import {MapManager} from "../mapLoader";
 
 class _Gameplay extends Scene {
     private camera = new Camera(c);
-
     private player = new Player();
+    private mapLoader = new MapManager();
 
     start() {
         this.addEntity(this.player);
-        Composite.add(
-            this.world,
-            Bodies.rectangle(400, 400, 800, 40, { isStatic: true }),
-        );
-
-        this.camera.position.x += 400;
-        this.camera.position.y += 240;
+        this.mapLoader
+            .setScene(this);
+        this.mapLoader
+            .setCamera(this.camera);
+        this.mapLoader
+            .loadMap('untitled');
+       
+        this.camera.entityToFollow = this.player.body;
+        this.camera.setScene(this);
+        this.camera.trigger(EntityEvents.SPAWN);
     }
 
+    beforeCamera() { 
+    }
 
     update() {
         if (DEFAULT_RESOURCE_MANAGER.isLoading) {
@@ -30,16 +37,11 @@ class _Gameplay extends Scene {
             c.fillText("Loading...", 0, 0);
             return;
         }
+        this.mapLoader.renderImageLayers();
 
-        this.camera.update();
-
+        
         super.update();
-
-        c.save();
-        c.globalCompositeOperation = "screen";
-        c.drawImage(this.render.canvas, 0, 0);
-        c.restore();
-    }
+    } 
 }
 
 export const Gameplay = new _Gameplay();

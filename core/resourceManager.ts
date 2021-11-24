@@ -46,7 +46,7 @@ export class ResourceManager extends EventEmitter<ResourceManagerEvents> {
 
 export const DEFAULT_RESOURCE_MANAGER = new ResourceManager();
 
-export class Resource<T extends (string | number) = any> extends EventEmitter<ResourceEvents | T> {
+export abstract class Resource<T extends (string | number) = any> extends EventEmitter<ResourceEvents | T> {
     static Manager: ResourceManager = DEFAULT_RESOURCE_MANAGER;
     static Events = ResourceEvents;
 

@@ -9,6 +9,8 @@ export enum SceneEvents {
     LOAD, DESTROY
 }
 
+export type WithCamera<Scene> = Scene & { beforeCamera: () => void };
+
 export class Scene extends EventEmitter<SceneEvents> {
     private entities: { [k: string]: Entity } = {};
     protected runner: Matter.Runner = Matter.Runner.create();
@@ -19,7 +21,7 @@ export class Scene extends EventEmitter<SceneEvents> {
         engine: this.engine,
         options: {
             width: 800,
-            height: 600,
+            height: 480,
         }
     });
 
@@ -40,10 +42,16 @@ export class Scene extends EventEmitter<SceneEvents> {
 
     public addEntity<T extends Entity>(entity: T, id: string = generateId()) {
         this.entities[id] = entity;
+        entity.id = id;
         entity.setScene(this);
         entity.trigger(EntityEvents.SPAWN);
 
         return entity;
+    }
+
+    public destroyEntity(en: Entity) {
+        en.trigger(EntityEvents.DESTROY);
+        delete this.entities[en.id];
     }
 
     private updateObjects() {

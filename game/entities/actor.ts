@@ -13,11 +13,11 @@ interface ActorSpriteList {
 
 export abstract class Actor<S extends ActorSpriteList = any> extends Entity {
     public spriteIndex: keyof S = 'default';
-    
-    public position = V.Cr(0, 0); 
+
+    protected rotateByBody = true;
 
     constructor (
-        protected collider: Matter.Body,
+        public body: Matter.Body,
         protected spriteList: S,
     ) {
         super();
@@ -26,30 +26,37 @@ export abstract class Actor<S extends ActorSpriteList = any> extends Entity {
         this.once(EntityEvents.SPAWN, this.start.bind(this));
     }
 
+    public get bodyPos() {
+        return this.body.position;
+    }
 
-    public get sprite() {
+    public get sprite(): Sprite {
         return this.spriteList[this.spriteIndex];
     }
 
     private preparePhysics() {
-        Composite.add(this.scene.world, this.collider);
+        Composite.add(this.scene.world, this.body);
     }
 
     public prepareSprites() {
-        const t = this.spriteList as ActorSpriteList;
+        const t = { ...this.spriteList } as ActorSpriteList;
         Object
             .entries(t)
             .forEach(([k, s]) => {
                 t[k] = s.clone();
-            })
+            });
+
+        this.spriteList = t as S;
     }
     
     public renderSprite() {
         if (!this.sprite) return;
-        const { position, angle } = this.collider;
+        const { position, angle } = this.body;
         const { x, y } = position;
-       
-        this.sprite.state.rotation = angle * 180 / Math.PI;
+        
+        if (this.rotateByBody) {
+            this.sprite.angle = -angle * 180 / Math.PI;
+        }
         this.sprite.render(x, y);
     }
 

@@ -1,4 +1,6 @@
 import { Entity, EntityEvents } from "./entity";
+import {Scene, WithCamera} from "./scene";
+import {VectorLike} from "./utils/vectorUtil";
 
 export class Camera extends Entity {
     public resolution: [ number, number ] = [1, 1];
@@ -9,8 +11,9 @@ export class Camera extends Entity {
     }
     public rotation = 0;
     public zoom = 1;
-    public entityToFollow?: Entity;
+    public entityToFollow?: { position: VectorLike };
     public followSmoothness = 16;
+    public area = [0, 0];
 
     private sceneUpdate!: () => void;
 
@@ -51,7 +54,9 @@ export class Camera extends Entity {
     private moveCameraToTarget() {
         if (!this.entityToFollow) return;
 
-        const { x: tx, y: ty } = this.entityToFollow.position;
+        let { x: tx, y: ty } = this.entityToFollow.position;
+
+        ty -= 150;
 
         this.position.x -= (this.position.x - tx) / this.followSmoothness;
         this.position.y -= (this.position.y - ty) / this.followSmoothness;
@@ -59,10 +64,12 @@ export class Camera extends Entity {
 
     public update() {
         const { context: c } = this;
+        const scene = this.scene as WithCamera<Scene>;
         if (!this.sceneUpdate) return;
 
         this.moveCameraToTarget();
 
+        scene.beforeCamera?.();
         c.save()
         this.applyCameraTransform();
         this.sceneUpdate();
@@ -71,6 +78,17 @@ export class Camera extends Entity {
 
     public applyCameraTransform() {
         const { context: c } = this;
+        const rw = this.resolution[0] / this.zoom;
+        const rh = this.resolution[1] / this.zoom;
+
+        if (this.area[0]) {
+            this.position.x = Math.min(rw / 2, Math.max(this.area[0] - rw / 2));
+        }
+
+        if (this.area[1]) {
+            this.position.y = Math.min(rh / 2, Math.max(this.area[1] - rh / 2));
+        }
+
         c.translate(this.resolution[0] / 2, this.resolution[1] / 2);
         c.rotate(this.rotation / 180 * Math.PI);
         c.scale(...this.actualZoom);

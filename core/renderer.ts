@@ -6,14 +6,16 @@ interface RendererOptions {
     resolution: [number, number];
     pixelated: boolean;
     targetContainer: string;
+    bgColor?: string;
 }
 
 type RenderFunction = () => void;
 
 const DEFAULT_OPTIONS: RendererOptions = {
-    resolution: [800, 480],
+    resolution: [1280, 720],
     pixelated: true,
     targetContainer: 'body',
+    bgColor: "#000",
 }
 
 export class Renderer extends EventEmitter<RendererEventList> {
@@ -48,10 +50,14 @@ export class Renderer extends EventEmitter<RendererEventList> {
         this.trigger('afterRender');
     }
 
+    public setBackgroundColor(color: string) {
+        this.options.bgColor = color;
+    }
+
     public clear() {
         const { context: c } = this;
 
-        c.fillStyle = "#000";
+        c.fillStyle = this.options.bgColor || DEFAULT_OPTIONS.bgColor!;
         c.fillRect(0, 0, c.canvas.width, c.canvas.height);
     }
 
