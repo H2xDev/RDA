@@ -1,5 +1,6 @@
-import {Graphics} from "./graphics";
-import {Resource} from "./resourceManager";
+import { Graphics } from "./graphics";
+import { Resource } from "./resourceManager";
+import { ResourceEvents } from "./types/fileManagerEvents.enum";
 
 const { round, PI } = Math;
 
@@ -9,6 +10,10 @@ interface SpriteOptions {
     scale?: [number, number];
     speed?: number;
     maxFrames?: number;
+}
+
+interface SpriteStateFiles {
+    [state: string]: string;
 }
 
 const DEFAULT_SPRITE_OPTIONS: Partial<SpriteOptions> = {
@@ -53,12 +58,16 @@ export default class Sprite extends Resource {
     }
 
     private loadImage() {
+        const { frameSize, image, maxFrames } = this;
+
         const onImageLoaded = () => {
-            const [fw, fh] = this.frameSize;
-            const { width, height } = this.image;
-            this.maxFrames = this.maxFrames || ((width / fw) * (height / fh)); 
+            const [ fw, fh ] = frameSize;
+            const { width, height } = image;
+
+            this.maxFrames = maxFrames || ((width / fw) * (height / fh)); 
             this.trigger(Resource.Events.LOADED, this);
         }
+
         this.image.src = `/sprites/${this.filename}`    
         this.image.addEventListener('load', onImageLoaded)
     }
@@ -83,51 +92,130 @@ export default class Sprite extends Resource {
         return [fx, fy, fw, fh];
     }
 
-    public useTransform(x: number, y: number) {
+    public useTransform(x: number, y: number, draw: (c: CanvasRenderingContext2D) => void) {
         const { angle, scale, offset } = this;
         const [ ox, oy ] = offset;
         const [ sx, sy ] = scale;
         const { Context: c } = Graphics;
 
+        c.save();
         c.translate(x, y);
         c.rotate(angle / 180 * PI);
         c.scale(sx, sy);
         c.translate(- ox, - oy);
-        this.transform = c.getTransform();
+        draw(c);
+        c.restore();
     }
 
     public render(x: number, y: number) {
         if (!this.isLoaded) return;
 
         const { image, frameState, speed, frameSize } = this;
-        const { Context: c } = Graphics;
         const [ fw, fh ] = frameSize;
 
-        c.save();
-        this.useTransform(x, y);
-        c.drawImage(
-            image, ...frameState,
-            0, 0, fw, fh,
-        );
-        c.restore();
+        this.useTransform(x, y, (c) => {
+            c.drawImage(image, ...frameState, 0, 0, fw, fh);
+        });
 
         this.frame += speed;
     }
 
-    public get frameDrawingArgs() {
-        const { image, frameState, frameSize } = this;
-        const [ fw, fh ] = frameSize;
+    public clone() {
+        const { offset, scale, speed } = this;
+        const { frameSize, maxFrames } = this;
+        const { filename } = this;
 
-        return [image, ...frameState, 0, 0, fw, fh];
+        return new Sprite(filename, {
+            offset, scale, speed,
+            frameSize, maxFrames,
+        });
+    }
+}
+
+type StateConditionMap<T extends SpriteStateFiles> = {
+    [S in keyof T]?: ((state: S) => boolean)[];
+}
+
+export class SpriteGroup<T extends SpriteStateFiles> extends Resource {
+    private list: { [state: string]: Sprite } = {};
+    private conditions: StateConditionMap<T> = {};
+    public state = 'default';
+    public angle = 0;
+    public scale: [number, number] = [1, 1];
+    public speed = 1;
+
+    constructor(
+        private states: T,
+        private options: SpriteOptions
+    ) {
+        super();
+        this.defineList();
+        this.updateOptions();
     }
 
-    public clone() {
-        return new Sprite(this.filename, {
-            offset: this.offset,
-            scale: this.scale,
-            speed: this.speed,
-            frameSize: this.frameSize,
-            maxFrames: this.maxFrames,
-        });
+    private updateOptions() {
+        this.speed = this.options.speed || this.speed;
+        this.scale = this.options.scale || this.scale;
+    }
+
+    private defineList() {
+        const { options, states } = this;
+
+        let totalSprites = Object.values(states).length;
+
+        const onSpriteLoaded = () => {
+            totalSprites -= 1;
+
+            if (!totalSprites) {
+                this.trigger(ResourceEvents.LOADED, this);
+            }
+        }
+
+        const listEntries = Object
+            .entries(states)
+            .map(([state, file]) => {
+                const sprite = new Sprite(file, options);
+
+                sprite.once(ResourceEvents.LOADED, onSpriteLoaded);
+
+                return [state, sprite];
+            });
+
+        this.list = Object.fromEntries(listEntries);
+    }
+
+    private updateState() {
+        Object
+            .entries(this.conditions)
+            .find(([state, conditions]) => {
+                if (!conditions) return false;
+
+                const isPassed = conditions.some((func: any) => func(state));
+
+                if (isPassed) {
+                    this.state = state;
+                    return true;
+                }
+            })
+    }
+
+    public get currentSprite() {
+        return this.list[this.state];
+    }
+
+    public render(x: number, y: number) {
+        if (!this.currentSprite) return;
+
+        this.updateState();
+
+        this.currentSprite.angle = this.angle;
+        this.currentSprite.scale = this.scale;
+        this.currentSprite.speed = this.speed;
+        this.currentSprite.render(x, y);
+    }
+
+    public condition<K extends keyof T>(state: K, conditionFunciton: (state: K) => boolean) {
+        this.conditions[state] = this.conditions[state] || [];
+        this.conditions[state]!.push(conditionFunciton);
     }
 }

@@ -16,9 +16,11 @@ class KInput extends EventEmitter {
 
     private initializeListeners() {
         const handleKeydown = (e: KeyboardEvent) => {
-            this.state[e.keyCode] = 1;
+            if (this.state[e.keyCode] !== 1) {
+                this.trigger('down:' + e.keyCode);
+            }
 
-            this.trigger('down:' + e.keyCode);
+            this.state[e.keyCode] = 1;
         }
 
         const handleKeyup = (e: KeyboardEvent) => {
@@ -36,7 +38,7 @@ class KInput extends EventEmitter {
             code = code.charCodeAt(0);
         }
 
-        return this.state[code] !== 0;
+        return this.state[code] === 1;
     }
 }
 

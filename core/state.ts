@@ -1,4 +1,4 @@
-import {EventEmitter} from "./event";
+import { EventEmitter } from "./event";
 
 export enum StateEvent {
     UPDATED
@@ -11,7 +11,7 @@ export class StateManager<T extends {}> extends EventEmitter<StateEvent> {
     }
 
     private defineProxy() {
-        this.state = new Proxy(this.state, {
+        const config = {
             set: (t: T & { [k: string]: any }, p: string, v: any) => {
                 const oldValue = t[p];
 
@@ -21,6 +21,12 @@ export class StateManager<T extends {}> extends EventEmitter<StateEvent> {
 
                 return Reflect.set(t, p, v);
             }
-        });
+        }
+
+        this.state = new Proxy(this.state, config);
+    }
+
+    public get<K extends keyof T>(key: K): T[K] {
+        return this.state[key];
     }
 }

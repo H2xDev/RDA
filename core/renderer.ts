@@ -6,7 +6,7 @@ interface RendererOptions {
     resolution: [number, number];
     pixelated: boolean;
     targetContainer: string;
-    bgColor?: string;
+    bgColor: string;
 }
 
 type RenderFunction = () => void;
@@ -23,13 +23,14 @@ export class Renderer extends EventEmitter<RendererEventList> {
 
     public domElement = document.createElement('canvas');
     public context!: CanvasRenderingContext2D;
+    public deltaTime = 0.0016;
 
     private options!: RendererOptions;
 
     constructor(options?: Partial<RendererOptions>) {
         super();
 
-        this.setOptions(options || {});
+        this.setOptions(options || DEFAULT_OPTIONS );
     }
 
     public setOptions(newOptions: Partial<RendererOptions>) {
@@ -45,9 +46,11 @@ export class Renderer extends EventEmitter<RendererEventList> {
         this.clear();
         requestAnimationFrame(() => this.render(func));
 
+        const p = performance.now();
         this.trigger('beforeRender');
         func();
         this.trigger('afterRender');
+        this.deltaTime = (performance.now() - p) / 1000;
     }
 
     public setBackgroundColor(color: string) {
@@ -57,24 +60,26 @@ export class Renderer extends EventEmitter<RendererEventList> {
     public clear() {
         const { context: c } = this;
 
-        c.fillStyle = this.options.bgColor || DEFAULT_OPTIONS.bgColor!;
+        c.fillStyle = this.options.bgColor!;
         c.fillRect(0, 0, c.canvas.width, c.canvas.height);
     }
 
     private applyOptions() {
         const [ width, height ] = this.options.resolution;
         const { pixelated, targetContainer } = this.options;
+        const { domElement } = this;
 
-        this.domElement.width = width;
-        this.domElement.height = height;
-        this.context = this.domElement
+        domElement.width = width;
+        domElement.height = height;
+        domElement.style.imageRendering = pixelated ? 'pixelated' : '';
+
+        this.context = domElement
             .getContext('2d', { alpha: false })!;
         
         this.context.imageSmoothingEnabled = !pixelated;
-        this.domElement.style.imageRendering = pixelated ? 'pixelated' : '';
 
         document
             .querySelector(targetContainer)!
-            .appendChild(this.domElement);
+            .appendChild(domElement);
     }
 }

@@ -58,10 +58,10 @@ export class EventEmitter<EventList extends (string | number) = string> {
 
         this.events[event].push(eventListener);
 
-        return () => this.removeListener(event, eventListener.handler);
+        return () => this.unsub(event, eventListener.handler);
     }
 
-    public once<T = any, H = void>(...args: Parameters<EventEmitter<EventList>['on']>) {
+    public once(...args: Parameters<EventEmitter<EventList>['on']>) {
         args[2] = args[2] ? { ...args[2], once: true } : { once: true };
         return this.on(...args);
     }
@@ -76,26 +76,26 @@ export class EventEmitter<EventList extends (string | number) = string> {
         this.events[eventName].forEach(this.checkEventListener.bind(this));
     }
 
+    public unsub(event: EventList, handler: EventHandler): void {
+        this.events[event] = this.events[event].filter((e) => e.handler !== handler);
+
+        if (!this.events[event].length) {
+            delete this.events[event];
+        }
+    }
+
     private checkEventListener(eventListener: EventListener<EventList>): void {
         const { event: eventName } = eventListener;
         if (eventListener.options.once) {
-            this.removeListener(eventName, eventListener.handler);
+            this.unsub(eventName, eventListener.handler);
         }
 
         if (typeof eventListener.options.takes === 'number') {
             // eslint-disable-next-line no-param-reassign
             eventListener.options.takes -= 1;
             if (eventListener.options.takes === 0) {
-                this.removeListener(eventName, eventListener.handler);
+                this.unsub(eventName, eventListener.handler);
             }
-        }
-    }
-
-    public removeListener(event: EventList, handler: EventHandler): void {
-        this.events[event] = this.events[event].filter((e) => e.handler !== handler);
-
-        if (!this.events[event].length) {
-            delete this.events[event];
         }
     }
 

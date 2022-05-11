@@ -1,46 +1,49 @@
-import { Bodies, Composite } from "matter-js";
 import { Camera } from "../../core/camera";
-import {EntityEvents} from "../../core/entity";
-import { DEFAULT_RESOURCE_MANAGER } from "../../core/resourceManager";
+import { EntityEvents } from "../../core/entity";
+import { DefaultResourceManager } from "../../core/resourceManager";
 import { Scene } from "../../core/scene";
+import { Level } from "../../core/tiled/level";
+import { ResourceEvents } from "../../core/types/fileManagerEvents.enum";
+import {V} from "../../core/utils/vector2";
 import { context as c } from "../engine";
-import { Player } from "../entities/player";
-import {MapManager} from "../mapLoader";
+import {Player} from "../entities/player";
+
+import testmap from '../maps/map1.json';
 
 class _Gameplay extends Scene {
     private camera = new Camera(c);
-    private player = new Player();
-    private mapLoader = new MapManager();
+
+    constructor() {
+        super();
+        Level.camera = this.camera;
+        Level.instance
+            .load(testmap as TiledMapOrthogonal);
+        Level.instance
+            .on(ResourceEvents.LOADED, () => {
+                const c = new Player();
+                V.update(c.position).set({ x: 260, y: 160});
+                this.camera.entityToFollow = c;
+                this.addEntity(c);
+            });
+    }
 
     start() {
-        this.addEntity(this.player);
-        this.mapLoader
-            .setScene(this);
-        this.mapLoader
-            .setCamera(this.camera);
-        this.mapLoader
-            .loadMap('untitled');
-       
-        this.camera.entityToFollow = this.player.body;
         this.camera.setScene(this);
         this.camera.trigger(EntityEvents.SPAWN);
     }
 
-    beforeCamera() { 
-    }
-
     update() {
-        if (DEFAULT_RESOURCE_MANAGER.isLoading) {
+        if (DefaultResourceManager.isLoading) {
             c.fillStyle = "#fff";
             c.textBaseline = "middle";
             c.textAlign = "center";
             c.fillText("Loading...", 0, 0);
             return;
         }
-        this.mapLoader.renderImageLayers();
 
-        
-        super.update();
+        Level.instance.render(() => {
+            super.update();
+        });
     } 
 }
 

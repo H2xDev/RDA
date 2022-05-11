@@ -1,0 +1,104 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "game/maps/map1.json",
+    "expandedProjectPaths": [
+        "game",
+        "game/maps"
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "game/editor/tools.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1
+        },
+        "game/maps/map1.json": {
+            "scale": 0.7422,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 667.6098086769065,
+                "y": 831.3123147399624
+            }
+        },
+        "game/maps/map1.json#base": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1
+        },
+        "game/maps/map1.json#generic": {
+            "scaleInDock": 1
+        },
+        "game/maps/map2.json": {
+            "scale": 1.1732,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 551.0569382884419,
+                "y": -759.035117627003
+            }
+        },
+        "game/maps/map2.json#base": {
+            "scaleInDock": 2
+        },
+        "game/maps/map2.json#generic": {
+            "scaleInDock": 1
+        },
+        "game/maps/map2.tmj": {
+            "scale": 0.54,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 611.1111111111111,
+                "y": 394.44444444444446
+            }
+        },
+        "game/maps/map2.tmj#base": {
+            "scaleInDock": 2
+        },
+        "game/maps/map2.tmj#generic": {
+            "scaleInDock": 1
+        },
+        "game/maps/template.tmj": {
+            "scale": 0.6937,
+            "selectedLayer": 5,
+            "viewCenter": {
+                "x": 604.0074960357504,
+                "y": 320.0230647253856
+            }
+        },
+        "game/maps/template.tmj#base": {
+            "scaleInDock": 1
+        },
+        "game/maps/template.tmj#generic": {
+            "scaleInDock": 1
+        }
+    },
+    "last.imagePath": "/Users/macbook/Projects/padGame/public/gfx",
+    "last.objectTemplatePath": "/Users/macbook/Projects/padGame/game/editor/templates",
+    "last.worldFilePath": "/Users/macbook/Projects/padGame/game/maps",
+    "loadedWorlds": [
+        "/Users/macbook/Projects/padGame/game/maps/rdworld.world"
+    ],
+    "map.height": 30,
+    "map.lastUsedFormat": "json",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "openFiles": [
+        "game/editor/tools.tsx",
+        "game/maps/map2.json",
+        "game/maps/map1.json"
+    ],
+    "project": "padGame.tiled-project",
+    "recentFiles": [
+        "game/editor/tools.tsx",
+        "game/maps/map2.json",
+        "game/maps/map1.json",
+        "game/maps/template.tmj",
+        "game/maps/map2.tmj"
+    ],
+    "tileset.embedInMap": false,
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}

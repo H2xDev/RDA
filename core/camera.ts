@@ -1,17 +1,15 @@
 import { Entity, EntityEvents } from "./entity";
-import {Scene, WithCamera} from "./scene";
-import {VectorLike} from "./utils/vectorUtil";
+import { Scene, WithCamera } from "./scene";
+import { ContextHelper } from "./utils/contextHelpers";
+import { V, Vector2 } from "./utils/vector2";
 
 export class Camera extends Entity {
     public resolution: [ number, number ] = [1, 1];
     public originalResolution: [ number, number ] = [1, 1];
-    public position = {
-        x: 0,
-        y: 0,
-    }
     public rotation = 0;
     public zoom = 1;
-    public entityToFollow?: { position: VectorLike };
+    public targetZoom = 1;
+    public entityToFollow?: { position: Vector2 };
     public followSmoothness = 16;
     public area = [0, 0];
 
@@ -37,6 +35,7 @@ export class Camera extends Entity {
             context.canvas.width,
             context.canvas.height,
         ]
+
         this.originalResolution = [
             context.canvas.width,
             context.canvas.height,
@@ -44,50 +43,54 @@ export class Camera extends Entity {
     }
 
     private get actualZoom(): [number, number] {
+        const { originalResolution, resolution, zoom } = this;
+        const [ ox, oy ] = originalResolution;
+        const [ rx, ry ] = resolution;
+
         if (!this.resolution) return [1, 1];
+
         return [
-            this.originalResolution[0] / (this.resolution[0] / this.zoom),
-            this.originalResolution[1] / (this.resolution[1] / this.zoom),
+            ox / rx,
+            oy / ry,
         ]
     }
 
     private moveCameraToTarget() {
         if (!this.entityToFollow) return;
 
-        let { x: tx, y: ty } = this.entityToFollow.position;
+        const { followSmoothness, position } = this;
+        const { position: target } = this.entityToFollow;
 
-        ty -= 150;
+        this.zoom -= (this.zoom - this.targetZoom) / followSmoothness;
 
-        this.position.x -= (this.position.x - tx) / this.followSmoothness;
-        this.position.y -= (this.position.y - ty) / this.followSmoothness;
+        V.update(position)
+            .lerp(target, followSmoothness);
     }
 
     public update() {
-        const { context: c } = this;
         const scene = this.scene as WithCamera<Scene>;
         if (!this.sceneUpdate) return;
 
         this.moveCameraToTarget();
 
         scene.beforeCamera?.();
-        c.save()
-        this.applyCameraTransform();
-        this.sceneUpdate();
-        c.restore();
+
+        ContextHelper
+            .isolatedTransform(() => {
+                this.updateZoom();
+                this.applyCameraTransform();
+                this.sceneUpdate();
+            })
+    }
+
+    public updateZoom() {
+        const { zoom: z, context } = this;
+        this.originalResolution[0] = context.canvas.width * z;
+        this.originalResolution[1] = context.canvas.height * z;
     }
 
     public applyCameraTransform() {
         const { context: c } = this;
-        const rw = this.resolution[0] / this.zoom;
-        const rh = this.resolution[1] / this.zoom;
-
-        if (this.area[0]) {
-            this.position.x = Math.min(rw / 2, Math.max(this.area[0] - rw / 2));
-        }
-
-        if (this.area[1]) {
-            this.position.y = Math.min(rh / 2, Math.max(this.area[1] - rh / 2));
-        }
 
         c.translate(this.resolution[0] / 2, this.resolution[1] / 2);
         c.rotate(this.rotation / 180 * Math.PI);

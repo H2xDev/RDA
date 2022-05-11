@@ -4,7 +4,9 @@
     ],
     "extensionsPath": "extensions",
     "folders": [
-        "."
+        "game"
     ],
-    "objectTypesFile": ""
+    "objectTypesFile": "",
+    "propertyTypes": [
+    ]
 }
