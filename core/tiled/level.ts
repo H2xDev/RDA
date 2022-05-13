@@ -134,16 +134,17 @@ export class Level extends Resource {
     }
 
     public getSolidArea(x: number, y: number, by?: Entity) {
-        return this.solidAreas.find(area => {
-            if (by === area) return false;
+        return this.solidAreas
+            .find(area => {
+                if (by === area) return false;
 
-            const { position, size } = area;
-            const half = V.div(size, 2);
+                const { position, size } = area;
+                const half = V.div(size, 2);
 
-            return true 
-                && x > position.x - half.x && x < position.x + half.x
-                && y > position.y - half.y && y < position.y + half.y;
-        });
+                return true 
+                    && x > position.x - half.x && x < position.x + half.x
+                    && y > position.y - half.y && y < position.y + half.y;
+            });
     }
 
     public addSolidArea(area: SolidArea) {

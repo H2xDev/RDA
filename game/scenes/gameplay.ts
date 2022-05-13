@@ -4,9 +4,9 @@ import { DefaultResourceManager } from "../../core/resourceManager";
 import { Scene } from "../../core/scene";
 import { Level } from "../../core/tiled/level";
 import { ResourceEvents } from "../../core/types/fileManagerEvents.enum";
-import {V} from "../../core/utils/vector2";
+import { V } from "../../core/utils/vector2";
 import { context as c } from "../engine";
-import {Player} from "../entities/player";
+import { Player } from "../entities/player";
 
 import testmap from '../maps/map1.json';
 
@@ -21,7 +21,7 @@ class _Gameplay extends Scene {
         Level.instance
             .on(ResourceEvents.LOADED, () => {
                 const c = new Player();
-                V.update(c.position).set({ x: 260, y: 160});
+                V.update(c.position).set({ x: 260, y: 170});
                 this.camera.entityToFollow = c;
                 this.addEntity(c);
             });

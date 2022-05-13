@@ -1,38 +1,41 @@
 import { V, Vector2 } from "../../core/utils/vector2";
+import { renderer } from "../engine";
 import { Body } from "./body";
 
 export class CharacterController extends Body {
-    protected jumpSpeed = 4;
-    protected movementSpeed = 0.2;
+    protected jumpSpeed = 3;
+    protected movementSpeed = 10;
     protected accelerationCooldownFactor = 0.8;
+    protected acceleration: number = 0;
 
     private reachResolver?: () => void;
     private reachPromise?: Promise<void>;
     private movementTarget?: Vector2;
 
     public isMovementDisabled = false;
-    public acceleration: number = 0;
 
     constructor() {
         super();
+    }
 
-        this.setDebug(true);
+    protected get isOnGround () {
+        return this.touchSide.bottom;
     }
 
     public move(acc: number) {
         if (this.isMovementDisabled) return;
-        if (!this.touchSide.bottom) return;
+        if (!this.isOnGround) return;
 
         this.acceleration = acc;
     }
 
     public jump() {
+        const { jumpSpeed } = this;
+
         if (this.isMovementDisabled) return;
         if (!this.touchSide.bottom) return;
 
-        const { velocity, jumpSpeed } = this;
-        this.position.y -= 3;
-        V.update(velocity).add({ x: 0, y: -jumpSpeed });
+        this.addImpulse({ x: 0, y: -jumpSpeed });
     }
 
     public update() {
@@ -42,10 +45,13 @@ export class CharacterController extends Body {
     }
 
     private applyAcceleration() {
-        const { velocity, movementSpeed, acceleration } = this;
+        const { dt } = renderer;
+        const { movementSpeed: m, acceleration: a } = this;
         const { accelerationCooldownFactor } = this;
-        V.update(velocity).add({ x: acceleration * movementSpeed, y: 0 });
 
+        const av = { x: a * m * dt, y: 0 };
+
+        this.addImpulse(av);
         this.acceleration *= accelerationCooldownFactor;
     }
 

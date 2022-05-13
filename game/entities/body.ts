@@ -1,12 +1,16 @@
 import { Entity } from "../../core/entity";
 import { Level } from "../../core/tiled/level";
 import { V, Vector2 } from "../../core/utils/vector2";
-import { context } from "../engine";
+import { context, renderer } from "../engine";
 import { state } from "../state";
 
-const MAX_RAY_LENGTH = 200;
-
 export class Body extends Entity {
+    protected friction = 1;
+    protected frictions = {
+        GROUND: 0.9,
+        AIR: 0.99,
+    }
+
     public isSolid = false;
     public useCollision = true;
     public useGravity = true;
@@ -15,7 +19,6 @@ export class Body extends Entity {
     public parentVelocity?: Vector2;
     public size = { x: 16, y: 16 };
     public actualVelocity = { x: 0, y: 0 };
-    protected friction = 1;
 
     public area = {
         min: { x: -99999, y: -99999 },
@@ -39,11 +42,13 @@ export class Body extends Entity {
     }
     
     private applyGravity() {
+        const { dt } = renderer;
+
         if (!this.useGravity) return;
 
         const { velocity } = this;
         const gravity = state.get('gravity');
-        V.update(velocity).add(gravity);
+        V.update(velocity).add(V.mul(gravity, dt));
 
         if (this.touchSide.bottom) {
             velocity.y = 0;
@@ -51,26 +56,34 @@ export class Body extends Entity {
     }
 
     private applyVelocity() {
+        const { dt } = renderer;
         const { position, velocity } = this;
-        const { parentVelocity, friction } = this;
+        const { parentVelocity } = this;
 
         const posBefore = V.copy(position);
         const positionUpdate = V.update(position).add(velocity);
         
         if (parentVelocity) {
-            positionUpdate.add(parentVelocity);
+            positionUpdate.add(V.mul(parentVelocity, dt));
         }
-
-        V.update(velocity).mul2({ x: friction, y: 1 });
 
         this.actualVelocity = V.sub(position, posBefore);
     }
 
-    private updateParentVelocity() {
+    private applyFriction() {
+        const { touchSide, velocity, friction } = this;
+
+        if (touchSide.bottom) {
+            V.update(velocity).mul2({ x: friction, y: 1 });
+        }
+    }
+
+    private checkParentVelocity() {
         const { position, halfSize } = this;
 
         const bottomPos = V.add(position, V.onlyY(halfSize), { x: 0, y: 5 });
-        const bottomBody = Level.instance.getSolidArea(...V.asArray(bottomPos)) as Body;
+        const bottomBody = Level.instance
+            .getSolidArea(...V.asArray(bottomPos)) as Body;
 
         if (bottomBody) {
             this.parentVelocity = bottomBody.actualVelocity;
@@ -82,11 +95,11 @@ export class Body extends Entity {
 
     private updateFriction() {
         if (!this.touchSide.bottom) {
-            this.friction = 0.99;
+            this.friction = this.frictions.AIR
             return;
         }
 
-        this.friction = 0.8;
+        this.friction = this.frictions.GROUND;
     }
 
     private clampPosition() {
@@ -94,12 +107,29 @@ export class Body extends Entity {
 
         const { min, max } = this.area;
         const { position, halfSize } = this;
+        const { velocity: v } = this;
 
-        const cmax = V.sub(max, halfSize);
-        const cmin = V.add(min, halfSize);
+        const one = { x: 1, y: 1 };
+        const cmax = V.sub(max, halfSize, one);
+        const cmin = V.add(min, halfSize, one);
 
         position.x = Math.max(cmin.x, Math.min(cmax.x, position.x));
         position.y = Math.max(cmin.y, Math.min(cmax.y, position.y));
+
+        this.touchSide = {
+            left: position.x <= cmin.x,
+            right: position.x >= cmax.x,
+            top: position.y <= cmin.y,
+            bottom: position.y >= cmax.y,
+        };
+
+        if ((this.touchSide.left && v.x < -1) || (this.touchSide.right && v.x > 1)) {
+            v.x = Math.sign(v.x);
+        }
+
+        if ((this.touchSide.top && v.y < -1) || (this.touchSide.bottom && v.y > 1)) {
+            v.y = Math.sign(v.y);
+        }
     }
 
     private renderCollisitonArea() {
@@ -130,14 +160,16 @@ export class Body extends Entity {
 
     public update() {
         this.updateCollisionArea();
-        this.updateFriction();
-        this.updateParentVelocity();
+        this.checkParentVelocity();
         this.applyGravity();
         this.applyVelocity();
         this.clampPosition();
 
+        this.updateFriction();
+        this.applyFriction();
+
         this.render();
-        // this.renderCollisitonArea();
+        this.renderCollisitonArea();
     }
 
     private render() {
@@ -150,126 +182,69 @@ export class Body extends Entity {
         context.strokeRect(...V.asArray(renderPosition), ...V.asArray(size));
     }
 
+    private resetTouches() {
+        this.touchSide = {
+            top: false,
+            bottom: false,
+            left: false,
+            right: false,
+        };
+    }
+
+    private resetCollisionArea() {
+        const { area } = this;
+
+        area.min = { x: -99999, y: -99999 };
+        area.max = { x: 99999, y: 99999 }
+    }
+
     public addImpulse(v: Vector2) {
         V.update(this.velocity).add(v);
     }
 
     public updateCollisionArea() {
         if (!this.useCollision) return;
+        const { halfSize: h, velocity: v } = this;
+        const { area, position, size } = this;
 
-        const { halfSize: h, size, position } = this;
-        const SIDE_DIVIDER = 2;
-        const xMinValues: number[] = [];
-        const xMaxValues: number[] = [];
-        const yMinValues: number[] = [];
-        const yMaxValues: number[] = [];
+        const SIDE_DIVIDER = 8;
+        const CYCLE_LENGTH = 100;
 
-        this.touchSide = {
-            top: false,
-            bottom: false,
-            left: false,
-            right: false,
-        }
+        this.resetTouches();
+        this.resetCollisionArea();
 
-        for (let i = 0; i < MAX_RAY_LENGTH; i++) {
-            let leftChecked = false;
-            let rightChecked = false;
-            const isFirstItteration = i < 3;
+        for (let i = 0; i < CYCLE_LENGTH; i++) {
+            for (let j = 0; j <= (size.y / SIDE_DIVIDER) >> 0; j += 1) {
+                const cy = -h.y + j * SIDE_DIVIDER;
 
-            for (let j = 1; j <= ((size.y - 2) / SIDE_DIVIDER) >> 0; j += SIDE_DIVIDER) {
-                const cy = -h.y + j;
+                const ox = V.add(position, V.onlyX(h));
+                const checkPos = V.add(ox, { x: i * Math.sign(v.x), y: cy });
+                const isCollided = Level.instance.checkSolid(...V.asArray(checkPos));
 
-                if (!leftChecked) {
-                    const ox = V.add(position, V.mul(V.onlyX(h), -1));
-                    const checkPos = V.add(ox, { x: -i, y: cy });
-                    const isCollided = Level.instance.checkSolid(...V.asArray(checkPos));
-
-                    if (isCollided) {
-                        while (Level.instance.checkSolid(...V.asArray(checkPos))) {
-                            V.update(checkPos).add({ x: 1, y: 0 });
-                        }
-
-                        xMinValues.push(checkPos.x);
-                        leftChecked = true;
-
-                        if (isFirstItteration) {
-                            this.touchSide.left = true;
-                        }
+                if (isCollided) {
+                    if (v.x > 0 && checkPos.x < area.max.x) {
+                        area.max.x = checkPos.x;
+                    } else if (v.x < 0 && checkPos.x > area.min.x) {
+                        area.min.x = checkPos.x;
                     }
                 }
-
-                if (!rightChecked) {
-                    const ox = V.add(position, V.onlyX(h));
-                    const checkPos = V.add(ox, { x: i, y: cy });
-                    const isCollided = Level.instance.checkSolid(...V.asArray(checkPos));
-
-                    if (isCollided) {
-                        while (Level.instance.checkSolid(...V.asArray(checkPos))) {
-                            V.update(checkPos).sub({ x: 1, y: 0 });
-                        }
-
-                        xMaxValues.push(checkPos.x);
-                        rightChecked = true;
-
-                        if (isFirstItteration) {
-                            this.touchSide.right = true;
-                        }
-                    }
-                }
-
-                if (rightChecked && leftChecked) break;
             }
 
+            for (let j = 0; j <= (size.x / SIDE_DIVIDER) >> 0; j += 1) {
+                const cx = -h.x + j * SIDE_DIVIDER;
 
-            let topChecked = false;
-            let bottomChecked = false;
+                const oy = V.add(position, V.onlyY(h));
+                const checkPos = V.add(oy, { x: cx, y: i * Math.sign(v.y) });
+                const isCollided = Level.instance.checkSolid(...V.asArray(checkPos));
 
-            for (let j = 1; j <= ((size.x - 2) / SIDE_DIVIDER) >> 0; j += SIDE_DIVIDER) {
-                const cx = -h.x + j;
-
-                if (!topChecked) {
-                    const oy = V.add(position, V.mul(V.onlyY(h), -1));
-                    const checkPos = V.add(oy, { x: cx, y: -i });
-                    const isCollided = Level.instance.checkSolid(...V.asArray(checkPos));
-
-                    if (isCollided) {
-                        while (Level.instance.checkSolid(...V.asArray(checkPos))) {
-                            V.update(checkPos).add({ x: 0, y: 1 });
-                        }
-
-                        yMinValues.push(checkPos.y);
-                        topChecked = true;
-
-                        if (isFirstItteration)
-                            this.touchSide.top = true;
+                if (isCollided) {
+                    if (v.y > 0 && checkPos.y < area.max.y) {
+                        area.max.y = checkPos.y;
+                    } else if (v.y < 0 && checkPos.y > area.min.y) {
+                        area.min.y = checkPos.y;
                     }
                 }
-
-                if (!bottomChecked) {
-                    const oy = V.add(position, V.onlyY(h));
-                    const checkPos = V.add(oy, { x: cx, y: i });
-                    const isCollided = Level.instance.checkSolid(...V.asArray(checkPos));
-
-                    if (isCollided) {
-                        while (Level.instance.checkSolid(...V.asArray(checkPos))) {
-                            V.update(checkPos).sub({ x: 0, y: 1 });
-                        }
-
-                        yMaxValues.push(checkPos.y);
-                        bottomChecked = true;
-
-                        if (isFirstItteration)
-                            this.touchSide.bottom = true;
-                    }
-                }
-
-                if (topChecked && bottomChecked) break;
             }
         }
-        
-        this.area.min.x = xMinValues.length ? Math.max(...xMinValues) : -99999;
-        this.area.min.y = yMinValues.length ? Math.max(...yMinValues) : -99999;
-        this.area.max.x = xMaxValues.length ? Math.min(...xMaxValues) : 99999;
-        this.area.max.y = yMaxValues.length ? Math.min(...yMaxValues) : 99999;
     }
 }

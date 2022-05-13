@@ -4,7 +4,7 @@ import { ResourceEvents } from "./types/fileManagerEvents.enum";
 
 const { round, PI } = Math;
 
-interface SpriteOptions {
+export interface SpriteOptions {
     frameSize: [number, number];
     offset?: [number, number];
     scale?: [number, number];
