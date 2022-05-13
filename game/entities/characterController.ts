@@ -3,7 +3,7 @@ import { renderer } from "../engine";
 import { Body } from "./body";
 
 export class CharacterController extends Body {
-    protected jumpSpeed = 3;
+    protected jumpSpeed = 350;
     protected movementSpeed = 10;
     protected accelerationCooldownFactor = 0.8;
     protected acceleration: number = 0;
@@ -30,12 +30,13 @@ export class CharacterController extends Body {
     }
 
     public jump() {
+        const { dt } = renderer;
         const { jumpSpeed } = this;
 
         if (this.isMovementDisabled) return;
         if (!this.touchSide.bottom) return;
 
-        this.addImpulse({ x: 0, y: -jumpSpeed });
+        this.addImpulse({ x: 0, y: -jumpSpeed * dt });
     }
 
     public update() {
