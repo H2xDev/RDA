@@ -48,7 +48,7 @@ export class Body extends Entity {
 
         const { velocity } = this;
         const gravity = state.get('gravity');
-        V.update(velocity).add(V.mul(gravity, dt));
+        this.addImpulse(V.mul(gravity, dt));
 
         if (this.touchSide.bottom) {
             velocity.y = 0;
@@ -56,7 +56,6 @@ export class Body extends Entity {
     }
 
     private applyVelocity() {
-        const { dt } = renderer;
         const { position, velocity } = this;
         const { parentVelocity } = this;
 
@@ -64,7 +63,7 @@ export class Body extends Entity {
         const positionUpdate = V.update(position).add(velocity);
         
         if (parentVelocity) {
-            positionUpdate.add(V.mul(parentVelocity, dt));
+            positionUpdate.add(parentVelocity);
         }
 
         this.actualVelocity = V.sub(position, posBefore);

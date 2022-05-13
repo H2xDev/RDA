@@ -5,7 +5,6 @@ export interface RendererOptions {
     pixelated: boolean;
     targetContainer: string;
     bgColor: string;
-    fps: number;
 }
 
 export enum RendererEvent {
@@ -20,12 +19,9 @@ const defaultRendererOptions: RendererOptions = {
     pixelated: true,
     targetContainer: 'body',
     bgColor: "#000",
-    fps: 60,
 }
 
-let lastRender = performance.now();
-let deltaTimes: number[] = [];
-let averageDt = 0.016;
+let lastRender = Date.now();
 
 export class Renderer extends EventEmitter<RendererEvent> {
     static DEFAULT_OPTIONS = defaultRendererOptions;
@@ -33,6 +29,7 @@ export class Renderer extends EventEmitter<RendererEvent> {
     public domElement = document.createElement('canvas');
     public context!: CanvasRenderingContext2D;
     public dt = 0.0016;
+    public fps = 0;
 
     private options!: RendererOptions;
 
@@ -51,14 +48,14 @@ export class Renderer extends EventEmitter<RendererEvent> {
         this.applyOptions();
     }
 
-    public render(func: RenderFunction) {
+    public render(func: RenderFunction, timestamp = performance.now()) {
         this.clear();
-        requestAnimationFrame(this.render.bind(this, func));
+        requestAnimationFrame((t) => this.render(func, t));
 
-        this.updateDeltatime();
         this.trigger(RendererEvent.BEFORE_RENDER);
         func();
         this.trigger(RendererEvent.AFTER_RENDER);
+        this.updateDeltatime(timestamp);
     }
 
     public setBackgroundColor(color: string) {
@@ -71,20 +68,10 @@ export class Renderer extends EventEmitter<RendererEvent> {
         c.fillRect(0, 0, c.canvas.width, c.canvas.height);
     }
 
-    private updateDeltatime() {
-        const now = performance.now();
-        this.dt = (now - lastRender) / 1000;
-        lastRender = now;
-
-        if (!averageDt) {
-            if (deltaTimes.length < 5) {
-                deltaTimes.push(this.dt);
-            } else {
-                averageDt = deltaTimes.reduce((c, p) => c + p, 0) / 5;
-            }
-        }
-
-        this.dt = Math.min(this.dt, averageDt);
+    private updateDeltatime(timestamp: number) {
+        this.dt = (timestamp - lastRender) / 1000;
+        this.fps = Math.round(1 / this.dt);
+        lastRender = timestamp;
     }
 
     private applyOptions() {

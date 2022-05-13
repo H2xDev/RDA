@@ -5,7 +5,7 @@ import { Scene } from "../../core/scene";
 import { Level } from "../../core/tiled/level";
 import { ResourceEvents } from "../../core/types/fileManagerEvents.enum";
 import { V } from "../../core/utils/vector2";
-import { context as c } from "../engine";
+import { context as c, context, renderer } from "../engine";
 import { Player } from "../entities/player";
 
 import testmap from '../maps/map1.json';
@@ -30,6 +30,12 @@ class _Gameplay extends Scene {
     start() {
         this.camera.setScene(this);
         this.camera.trigger(EntityEvents.SPAWN);
+    }
+
+    beforeCamera() {
+        context.fillStyle = "#fff";
+        context.fillText(String(renderer.fps), 16, 16);
+        context.fillText(String(renderer.dt), 16, 32);
     }
 
     update() {

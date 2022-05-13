@@ -3,7 +3,7 @@ import { renderer } from "../engine";
 import { Body } from "./body";
 
 export class CharacterController extends Body {
-    protected jumpSpeed = 350;
+    protected jumpSpeed = 300;
     protected movementSpeed = 10;
     protected accelerationCooldownFactor = 0.8;
     protected acceleration: number = 0;
