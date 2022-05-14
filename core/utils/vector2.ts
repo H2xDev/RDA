@@ -1,5 +1,3 @@
-import {Vector} from "matter-js";
-
 export interface Vector2 {
     x: number;
     y: number;
@@ -14,6 +12,13 @@ export class VUpdate {
         this.v.x /= by;
         this.v.y /= by;
         
+        return this;
+    }
+
+    pow(n: number) {
+        this.v.x = this.v.x ** n;
+        this.v.y = this.v.y ** n;
+
         return this;
     }
 
@@ -163,6 +168,13 @@ export class V {
         return {
             x: a.x * b.x,
             y: a.y * b.y,
+        };
+    }
+
+    static pow(a: Vector2, n: number) {
+        return {
+            x: a.x ** n,
+            y: a.y ** n,
         };
     }
 

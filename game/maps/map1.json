@@ -95,10 +95,27 @@
          "name":"entities",
          "objects":[
                 {
-                 "id":1,
-                 "template":"..\/editor\/templates\/Player.tx",
-                 "x":280,
-                 "y":288
+                 "id":3,
+                 "template":"..\/editor\/templates\/Player.json",
+                 "x":335.75,
+                 "y":272
+                }, 
+                {
+                 "id":8,
+                 "properties":[
+                        {
+                         "name":"to",
+                         "propertytype":"Map",
+                         "type":"class",
+                         "value":
+                            {
+                             "gate":"3",
+                             "name":"map2"
+                            }
+                        }],
+                 "template":"..\/editor\/templates\/Gate.json",
+                 "x":720,
+                 "y":256
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -234,7 +251,7 @@
          "y":0
         }],
  "nextlayerid":15,
- "nextobjectid":3,
+ "nextobjectid":9,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.8.4",

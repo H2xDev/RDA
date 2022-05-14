@@ -1,0 +1,22 @@
+{ "object":
+    {
+     "height":32,
+     "id":6,
+     "name":"",
+     "properties":[
+            {
+             "name":"to",
+             "propertytype":"Map",
+             "type":"class",
+             "value":
+                {
+                 "name":"map2"
+                }
+            }],
+     "rotation":0,
+     "type":"Gate",
+     "visible":true,
+     "width":16
+    },
+ "type":"template"
+}

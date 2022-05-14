@@ -1,3 +1,4 @@
+import {Camera} from "./camera";
 import { ChildrenList, Entity, EntityEvents } from "./entity";
 import { EventEmitter } from "./event";
 import { generateId } from "./utils/generateId";
@@ -7,7 +8,10 @@ export enum SceneEvents {
     DESTROY,
 }
 
-export type WithCamera<Scene> = Scene & { beforeCamera: () => void };
+export type WithCamera<Scene> = Scene & {
+    camera: Camera,
+    beforeCamera: () => void
+};
 
 export class Scene extends EventEmitter<SceneEvents> {
     private children: ChildrenList = {};

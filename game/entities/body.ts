@@ -3,6 +3,7 @@ import { Level } from "../../core/tiled/level";
 import { V, Vector2 } from "../../core/utils/vector2";
 import { context, renderer } from "../engine";
 import { state } from "../state";
+import { factorMultipiler } from "../utils";
 
 export class Body extends Entity {
     protected friction = 1;
@@ -25,11 +26,6 @@ export class Body extends Entity {
         max: { x: 99999, y: 99999 },
     }
 
-    public oarea = {
-        min: { x: -1, y: -1 },
-        max: { x: 1, y: 1 },
-    }
-
     public touchSide = {
         top: false,
         bottom: false,
@@ -40,40 +36,68 @@ export class Body extends Entity {
     private get halfSize() {
         return V.div(this.size, 2);
     }
-    
-    private applyGravity() {
+
+    public setSolid(state: boolean) {
+        this.isSolid = state;
+
+        if (state) {
+            Level.instance.addSolidArea(this);
+            return;
+        }
+
+        Level.instance.removeSolidArea(this);
+    }
+
+    public update() {
+        this.updateCollisionArea();
+        this.checkParentVelocity();
+        this.applyGravity();
+        this.applyVelocity();
+        this.clampPosition();
+
+        this.updateFriction();
+        this.applyFriction();
+
+        this.render();
+        this.renderCollisitonArea();
+    }
+
+    public addAcceleration(v: Vector2) {
         const { dt } = renderer;
 
+        V.update(this.velocity).add(V.mul(v, dt));
+    }
+
+    public addImpulse(v: Vector2) {
+        V.update(this.velocity).add(v);
+    }
+    
+    private applyGravity() {
         if (!this.useGravity) return;
-
-        const { velocity } = this;
+        
         const gravity = state.get('gravity');
-        this.addImpulse(V.mul(gravity, dt));
 
-        if (this.touchSide.bottom) {
-            velocity.y = 0;
-        }
+        this.addAcceleration(gravity);
     }
 
     private applyVelocity() {
+        const { dt } = renderer;
         const { position, velocity } = this;
         const { parentVelocity } = this;
 
-        const posBefore = V.copy(position);
-        const positionUpdate = V.update(position).add(velocity);
-        
-        if (parentVelocity) {
-            positionUpdate.add(parentVelocity);
-        }
+        const positionUpdate = V.update(position).add(V.mul(velocity, dt));
 
-        this.actualVelocity = V.sub(position, posBefore);
+        if (parentVelocity) {
+            positionUpdate.add(V.mul(parentVelocity, dt));
+        }
     }
 
     private applyFriction() {
+        const { dt } = renderer;
         const { touchSide, velocity, friction } = this;
 
         if (touchSide.bottom) {
-            V.update(velocity).mul2({ x: friction, y: 1 });
+            velocity.x -= velocity.x * dt * (1 - friction) * 100
         }
     }
 
@@ -122,11 +146,13 @@ export class Body extends Entity {
             bottom: position.y >= cmax.y,
         };
 
-        if ((this.touchSide.left && v.x < -1) || (this.touchSide.right && v.x > 1)) {
+        const { left, right, top, bottom } = this.touchSide;
+
+        if ((left && v.x < -1) || (right && v.x > 1)) {
             v.x = Math.sign(v.x);
         }
 
-        if ((this.touchSide.top && v.y < -1) || (this.touchSide.bottom && v.y > 1)) {
+        if ((top && v.y < -1) || (bottom && v.y > 1)) {
             v.y = Math.sign(v.y);
         }
     }
@@ -144,31 +170,6 @@ export class Body extends Entity {
         context.fillStyle = this.debugColor;
         context.fillRect(x, y, w, h);
         context.restore();
-    }
-
-    public setSolid(state: boolean) {
-        this.isSolid = state;
-
-        if (state) {
-            Level.instance.addSolidArea(this);
-            return;
-        }
-
-        Level.instance.removeSolidArea(this);
-    }
-
-    public update() {
-        this.updateCollisionArea();
-        this.checkParentVelocity();
-        this.applyGravity();
-        this.applyVelocity();
-        this.clampPosition();
-
-        this.updateFriction();
-        this.applyFriction();
-
-        this.render();
-        this.renderCollisitonArea();
     }
 
     private render() {
@@ -195,10 +196,6 @@ export class Body extends Entity {
 
         area.min = { x: -99999, y: -99999 };
         area.max = { x: 99999, y: 99999 }
-    }
-
-    public addImpulse(v: Vector2) {
-        V.update(this.velocity).add(v);
     }
 
     public updateCollisionArea() {

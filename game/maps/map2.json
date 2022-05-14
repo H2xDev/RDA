@@ -247,11 +247,11 @@
          "id":1,
          "name":"base",
          "opacity":1,
-         "startx":0,
+         "startx":16,
          "starty":-16,
          "type":"tilelayer",
          "visible":true,
-         "width":80,
+         "width":64,
          "x":0,
          "y":0
         }, 
@@ -259,7 +259,24 @@
          "draworder":"topdown",
          "id":12,
          "name":"entities",
-         "objects":[],
+         "objects":[
+                {
+                 "id":3,
+                 "properties":[
+                        {
+                         "name":"to",
+                         "propertytype":"Map",
+                         "type":"class",
+                         "value":
+                            {
+                             "gate":"8",
+                             "name":"map2"
+                            }
+                        }],
+                 "template":"..\/editor\/templates\/Gate.json",
+                 "x":496,
+                 "y":272
+                }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
@@ -300,20 +317,20 @@
         }, 
         {
          "chunks":[],
-         "height":32,
+         "height":0,
          "id":9,
          "name":"$",
          "opacity":0.44,
-         "startx":16,
+         "startx":0,
          "starty":0,
          "type":"tilelayer",
          "visible":true,
-         "width":48,
+         "width":0,
          "x":0,
          "y":0
         }],
  "nextlayerid":15,
- "nextobjectid":3,
+ "nextobjectid":4,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.8.4",

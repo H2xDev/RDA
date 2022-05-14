@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/matter-js": "^0.17.6",
+    "@types/webpack-env": "^1.16.4",
     "concurrently": "^6.4.0",
     "css-loader": "^6.5.1",
     "file-loader": "^6.2.0",

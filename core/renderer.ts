@@ -21,15 +21,16 @@ const defaultRendererOptions: RendererOptions = {
     bgColor: "#000",
 }
 
-let lastRender = Date.now();
+let lastRender = performance.now();
 
 export class Renderer extends EventEmitter<RendererEvent> {
     static DEFAULT_OPTIONS = defaultRendererOptions;
 
     public domElement = document.createElement('canvas');
     public context!: CanvasRenderingContext2D;
-    public dt = 0.0016;
+    public dt = 0.016;
     public fps = 0;
+    public speedMultipiler = 1;
 
     private options!: RendererOptions;
 
@@ -49,13 +50,11 @@ export class Renderer extends EventEmitter<RendererEvent> {
     }
 
     public render(func: RenderFunction, timestamp = performance.now()) {
-        this.clear();
         requestAnimationFrame((t) => this.render(func, t));
 
-        this.trigger(RendererEvent.BEFORE_RENDER);
-        func();
-        this.trigger(RendererEvent.AFTER_RENDER);
         this.updateDeltatime(timestamp);
+        this.clear();
+        func();
     }
 
     public setBackgroundColor(color: string) {
@@ -70,7 +69,11 @@ export class Renderer extends EventEmitter<RendererEvent> {
 
     private updateDeltatime(timestamp: number) {
         this.dt = (timestamp - lastRender) / 1000;
-        this.fps = Math.round(1 / this.dt);
+        this.fps = 1 / this.dt;
+        this.dt = Math.min(0.018, this.dt);
+
+        this.dt *= 10;
+
         lastRender = timestamp;
     }
 

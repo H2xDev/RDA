@@ -1,6 +1,7 @@
 import { SpriteGroup, SpriteOptions } from "../../core/sprite";
 import { CharacterController } from "./characterController";
 import { V } from "../../core/utils/vector2";
+import {renderer} from "../engine";
 
 type CharacterSpriteStates = {
     idle: string;
@@ -38,19 +39,21 @@ export class Character extends CharacterController {
 
     private initSpriteGroupConditions() {
         const { spriteGroup } = this;
+        const { dt } = renderer;
 
         const runIdleCondition = (state: 'run' | 'idle') => {
             if (!this.isOnGround) return false;
 
-            const { velocity, spriteGroup } = this;
+            const { spriteGroup } = this;
             const { scale } = spriteGroup;
 
             switch (state) {
                 case 'run':
+                    scale[0] = Math.sign(this.acceleration) || scale[0];
+                    this.spriteGroup.speed = Math.abs(this.acceleration) * 2 * dt;
+
                     return Math.abs(this.acceleration) > 0.5;
                 case 'idle':
-                    scale[0] = Math.sign(velocity.x) || scale[0];
-                    this.spriteGroup.speed = Math.abs(this.velocity.x) / 8;
                     return Math.abs(this.acceleration) < 0.5;
             }
         }

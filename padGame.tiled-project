@@ -8,5 +8,22 @@
     ],
     "objectTypesFile": "",
     "propertyTypes": [
+        {
+            "id": 1,
+            "members": [
+                {
+                    "name": "gate",
+                    "type": "string",
+                    "value": ""
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "value": ""
+                }
+            ],
+            "name": "Map",
+            "type": "class"
+        }
     ]
 }

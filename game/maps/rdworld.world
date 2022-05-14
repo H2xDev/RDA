@@ -3,16 +3,16 @@
         {
             "fileName": "map2.json",
             "height": 768,
-            "width": 1280,
-            "x": -32,
-            "y": -1472
+            "width": 1024,
+            "x": 1808,
+            "y": -2784
         },
         {
             "fileName": "map1.json",
             "height": 480,
             "width": 1088,
-            "x": 64,
-            "y": -2432
+            "x": 976,
+            "y": -2752
         }
     ],
     "onlyShowAdjacentMaps": false,

@@ -59,6 +59,8 @@ export class Level extends Resource {
     private solidAreas: SolidArea[] = [];
     private canvasSize = [0, 0];
 
+    public objects: TiledObject[] = [];
+
     public load(map: TiledMapOrthogonal) {
         this.map = map;
         this.reset();
@@ -67,6 +69,7 @@ export class Level extends Resource {
                 this.bakeLayers();
                 this.sortLayers();
                 this.generateSolidMask();
+                this.prepareObjects();
                 this.trigger(ResourceEvents.LOADED, this);
                 console.log(this);
             });
@@ -153,6 +156,21 @@ export class Level extends Resource {
 
     public removeSolidArea(area: SolidArea) {
         this.solidAreas = this.solidAreas.filter(a => a !== area);
+    }
+
+    private prepareObjects() {
+        const objectLayers = this.map.layers.filter(l => l.type === 'objectgroup') as TiledLayerObjectgroup[];
+        const list = objectLayers.map(l => l.objects).flat();
+
+        const fixObjectPosition = (o: TiledObject) => {
+            if (o.gid) {
+                o.y -= o.height;
+            }
+        }
+
+        list.forEach(fixObjectPosition);
+
+        this.objects = list;
     }
 
     private reset() {
