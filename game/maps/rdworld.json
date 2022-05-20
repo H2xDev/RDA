@@ -2,9 +2,9 @@
     "maps": [
         {
             "fileName": "map2.json",
-            "height": 768,
-            "width": 1024,
-            "x": 1808,
+            "height": 576,
+            "width": 1248,
+            "x": 2064,
             "y": -2784
         },
         {

@@ -5,7 +5,7 @@ export enum StateEvent {
 }
 
 export class StateManager<T extends {}> extends EventEmitter<StateEvent> {
-    constructor(private state:T) {
+    constructor(public state:T) {
         super();
         this.defineProxy();
     }

@@ -4,7 +4,7 @@ import { Camera } from '../camera';
 import { V, Vector2 } from '../utils/vector2';
 import {Entity} from "../entity";
 
-export interface SolidArea extends Entity {
+export interface SolidArea extends Entity<string> {
     size: Vector2;
 }
 
@@ -50,9 +50,9 @@ export class Level extends Resource {
         RESET: 'level:reset',
     };
 
+    private map!: TiledMap;
     private bakedLayers: HTMLCanvasElement[] = [];
     private tilesets: Tileset[] = [];
-    private map!: TiledMap;
     private foregroundLayers: HTMLCanvasElement[] = [];
     private backgroundLayers: HTMLCanvasElement[] = [];
     private solidMask: boolean[] = [];
@@ -61,7 +61,9 @@ export class Level extends Resource {
 
     public objects: TiledObject[] = [];
 
-    public load(map: TiledMapOrthogonal) {
+    public load(map?: TiledMapOrthogonal) {
+        if (!map) return this;
+
         this.map = map;
         this.reset();
         this.prepareTilesets()
@@ -71,8 +73,9 @@ export class Level extends Resource {
                 this.generateSolidMask();
                 this.prepareObjects();
                 this.trigger(ResourceEvents.LOADED, this);
-                console.log(this);
             });
+
+        return this;
     }
 
     public get backgroundColor() {
@@ -136,6 +139,50 @@ export class Level extends Resource {
         return isMaskCollided || isAreaCollided;
     }
 
+    public checkSolidByVector(x: number, y: number, v: Vector2, length: number = 10) {
+        const n = V.normalize(v);
+        const r = V.normal(n);
+        const o = { x, y };
+        const v1 = V.sub(o, V.mul(r, 1));
+        const v2 = V.add(o, V.mul(r, 1));
+
+        let collided1 = false;
+        let collided2 = false;
+
+        for (let i = 0; i < length; i++) {
+            if (this.checkSolid(v1.x, v1.y)) {
+                V.update(v1).floor();
+                collided1 = true;
+                break;
+            }
+
+            V.update(v1).add(n);
+        }
+
+        for (let i = 0; i < length; i++) {
+            if (this.checkSolid(v2.x, v2.y)) {
+                V.update(v2).floor();
+                collided2 = true;
+                break;
+            }
+
+            V.update(v2).add(n);
+        }
+
+        const normal = V.update(V.normal(V.sub(v2, v1)))
+            .normalize()
+            .done();
+
+        const reflected = V.update(V.copy(v)).reflect(normal).done();
+
+        return {
+            collided: collided2 && collided1,
+            normal,
+            point: v1,
+            reflected,
+        };
+    }
+
     public getSolidArea(x: number, y: number, by?: Entity) {
         return this.solidAreas
             .find(area => {
@@ -145,8 +192,10 @@ export class Level extends Resource {
                 const half = V.div(size, 2);
 
                 return true 
-                    && x > position.x - half.x && x < position.x + half.x
-                    && y > position.y - half.y && y < position.y + half.y;
+                    && x > position.x - half.x
+                    && x < position.x + half.x
+                    && y > position.y - half.y
+                    && y < position.y + half.y;
             });
     }
 
@@ -159,8 +208,10 @@ export class Level extends Resource {
     }
 
     private prepareObjects() {
-        const objectLayers = this.map.layers.filter(l => l.type === 'objectgroup') as TiledLayerObjectgroup[];
-        const list = objectLayers.map(l => l.objects).flat();
+        const objectLayers = this.map.layers
+            .filter(l => l.type === 'objectgroup') as TiledLayerObjectgroup[];
+        const list = objectLayers
+            .map(l => l.objects).flat();
 
         const fixObjectPosition = (o: TiledObject) => {
             if (o.gid) {
@@ -174,15 +225,14 @@ export class Level extends Resource {
     }
 
     private reset() {
-        this.trigger(Level.Event.RESET);
         this.foregroundLayers = [];
         this.backgroundLayers = [];
         this.solidMask = [];
         this.solidAreas = [];
+        this.trigger(Level.Event.RESET);
     }
 
     private generateSolidMask() {
-        console.log(this);
         const allLayers = [...this.backgroundLayers, ...this.foregroundLayers];
         const solidLayer = allLayers.find(l => l.dataset.name === '$');
 

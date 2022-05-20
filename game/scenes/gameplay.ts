@@ -1,92 +1,89 @@
-import { Camera } from "../../core/camera";
-import { Entity, EntityEvents } from "../../core/entity";
 import { DefaultResourceManager } from "../../core/resourceManager";
-import { Scene } from "../../core/scene";
 import { Level } from "../../core/tiled/level";
 import { ResourceEvents } from "../../core/types/fileManagerEvents.enum";
-import { V } from "../../core/utils/vector2";
-import {enitityTemplates, resolveTemplate} from "../editor/templates";
-import { context as c, context, renderer } from "../engine";
-import { levelEntities } from "../entities/level";
+import { context as c } from "../engine";
+import { SceneWithCamera } from "./sceneWithCamera";
 
-import testmap from '../maps/map1.json';
+import { MapList } from '../maps/index';
+import {spawnEntities} from "../entities/level";
+import { Entity } from "../../core/entity";
+import { Player } from "../entities/level/player.entity";
+import { V } from "../../core/utils/vector2";
 
 const { instance: LevelManager } = Level;
 
-class _Gameplay extends Scene {
-    private camera = new Camera(c);
-
-    constructor() {
-        super();
-        Level.camera = this.camera;
-        LevelManager
-            .load(testmap as TiledMapOrthogonal);
-        LevelManager
-            .on(ResourceEvents.LOADED, this.spawnEntities.bind(this));
-    }
-
-    public start() {
-        this.camera.setScene(this);
-        this.camera.trigger(EntityEvents.SPAWN);
-    }
-
-    public beforeCamera() {
-        context.fillStyle = "#fff";
-        context.fillText(String(renderer.fps), 16, 16);
-        context.fillText(String(renderer.dt), 16, 32);
-    }
-
-    public update() {
-        if (DefaultResourceManager.isLoading) {
-            c.fillStyle = "#fff";
-            c.textBaseline = "middle";
-            c.textAlign = "center";
-            c.fillText("Loading...", 0, 0);
-            return;
+export const Gameplay = new (
+    class extends SceneWithCamera {
+        public meta = {
+            uiComponent: 'hud',
         }
 
-        Level.instance.render(() => {
-            super.update();
-        });
-    } 
-    
-    private spawnEntities() {
-        const bySupport = (o: TiledObject) => {
-            console.log(o);
-            return (o.type in levelEntities) || !!resolveTemplate(o);
+        public currentMap = 'map1';
+        public mapStates = {};
+
+        constructor() {
+            super();
+            Level.camera = this.camera;
+            LevelManager.on(Level.Event.RESET, () => {
+                Entity.CallForAll(this.children, 'destroy');
+            })
+            this.loadMap();
         }
 
-        const toEntities = (o: TiledObject) => {
-            if (o.template) {
-                const t = resolveTemplate(o)!;
-
-                o.type = t.object.type;
-                
-                if (t.object.gid) {
-                    o.y -= t.object.height;
-                    const h = V.div({ x: t.object.width, y: t.object.height }, 2);
-
-                    V.update(o).add(h);
-                }
+        public update() {
+            if (DefaultResourceManager.isLoading) {
+                c.fillStyle = "#fff";
+                c.textBaseline = "middle";
+                c.textAlign = "center";
+                c.fillText("Loading...", 0, 0);
+                return;
             }
 
-            const e = new levelEntities[o.type]();
-
-            V.update(e.position).set(o);
-            this.addEntity(e, String(o.id));
-            return e;
+            Level.instance.render(() => {
+                super.update();
+            });
+        } 
+        
+        private spawnEntities() {
+            spawnEntities(this);
         }
 
-        const triggerEvents = (e: Entity) => {
-            e.setScene(this);
-            e.trigger(EntityEvents.SPAWN, e);
+        public changeMap(targetMap: string, gateId: number) {
+            this.mapStates[this.currentMap] = { ...this.children };
+            this.currentMap = targetMap;
+
+            this.loadMap()
+                .once(ResourceEvents.LOADED, () => {
+                    const gate = this.children[gateId];
+                    if (!gate) return;
+
+                    V.update(Player.current.position)
+                        .set(gate.position);
+
+                    this.camera.resetPosition();
+                })
         }
 
-        LevelManager.objects
-            .filter(bySupport)
-            .map(toEntities)
-            .forEach(triggerEvents);
+        private loadMap() {
+            LevelManager
+                .load(MapList[this.currentMap])
+                .once(ResourceEvents.LOADED, () => {
+                    const mapState = this.mapStates[this.currentMap];
+
+                    this.spawnEntities();
+
+                    if (mapState) {
+                        Object
+                            .values(this.children)
+                            .forEach((e) => {
+                                if (!mapState[e.id]) {
+                                    delete this.children[e.id];
+                                }
+                            })
+                    }
+                });
+
+            return LevelManager;
+        }
     }
-}
-
-export const Gameplay = new _Gameplay();
+);

@@ -3,9 +3,8 @@ import { Level } from "../../core/tiled/level";
 import { V, Vector2 } from "../../core/utils/vector2";
 import { context, renderer } from "../engine";
 import { state } from "../state";
-import { factorMultipiler } from "../utils";
 
-export class Body extends Entity {
+export class Body<T extends (string | number) = number> extends Entity<T> {
     protected friction = 1;
     protected frictions = {
         GROUND: 0.9,
@@ -15,6 +14,7 @@ export class Body extends Entity {
     public isSolid = false;
     public useCollision = true;
     public useGravity = true;
+    public useFriction = true;
 
     public velocity = { x: 0, y: 0 };
     public parentVelocity?: Vector2;
@@ -49,6 +49,8 @@ export class Body extends Entity {
     }
 
     public update() {
+        super.update();
+
         this.updateCollisionArea();
         this.checkParentVelocity();
         this.applyGravity();
@@ -70,6 +72,18 @@ export class Body extends Entity {
 
     public addImpulse(v: Vector2) {
         V.update(this.velocity).add(v);
+    }
+
+    public checkIntersectionWith(body: Body) {
+        const { x: w, y: h } = this.size;
+        const { x, y } = this.position;
+
+        const { x: ax, y: ay } = body.position;
+        const { x: aw, y: ah } = body.size;
+
+        return true
+            && x + w / 2 > ax - aw / 2 && x - w / 2 < ax + aw / 2
+            && y + h / 2 > ay - ah / 2 && y - h / 2 < ay + ah / 2;
     }
     
     private applyGravity() {
@@ -93,6 +107,7 @@ export class Body extends Entity {
     }
 
     private applyFriction() {
+        if (!this.useFriction) return;
         const { dt } = renderer;
         const { touchSide, velocity, friction } = this;
 
@@ -117,6 +132,8 @@ export class Body extends Entity {
     }
 
     private updateFriction() {
+        if (!this.useFriction) return;
+
         if (!this.touchSide.bottom) {
             this.friction = this.frictions.AIR
             return;
@@ -159,6 +176,7 @@ export class Body extends Entity {
 
     private renderCollisitonArea() {
         if (!this.isDebugging) return;
+        if (!this.useCollision) return;
 
         const { min, max } = this.area;
 

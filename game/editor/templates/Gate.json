@@ -5,13 +5,14 @@
      "name":"",
      "properties":[
             {
+             "name":"gate",
+             "type":"string",
+             "value":""
+            }, 
+            {
              "name":"to",
-             "propertytype":"Map",
-             "type":"class",
-             "value":
-                {
-                 "name":"map2"
-                }
+             "type":"string",
+             "value":"map2"
             }],
      "rotation":0,
      "type":"Gate",

@@ -1,18 +1,7 @@
 export interface EntityTemplate {
-    object:  Object;
+    object:  TiledObject;
     tileset: Tileset;
     type:    string;
-}
-
-export interface Object {
-    gid:      number;
-    height:   number;
-    id:       number;
-    name:     string;
-    rotation: number;
-    type:     string;
-    visible:  boolean;
-    width:    number;
 }
 
 export interface Tileset {
@@ -33,10 +22,22 @@ export const enitityTemplates = Object.fromEntries(entries) as {
     [key: string]: EntityTemplate,
 }
 
+export interface TemplatedObject extends TiledObject {
+    templateProperties?: TiledProperty[];
+}
+
 export const resolveTemplate = (o: TiledObject) => {
-    if (!o.template) return;
+    if (!o.template) return o as TemplatedObject;
 
     const file = o.template!.split('/').pop()!;
 
-    return enitityTemplates[file];
+    const t = enitityTemplates[file];
+
+    if (!t) return o as TemplatedObject;
+
+    return {
+        ...t.object,
+        ...o,
+        templateProperties: t.object.properties,
+    } as TemplatedObject;
 }

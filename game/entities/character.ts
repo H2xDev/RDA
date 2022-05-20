@@ -1,7 +1,8 @@
+import { renderer } from "../engine";
+import { V } from "../../core/utils/vector2";
 import { SpriteGroup, SpriteOptions } from "../../core/sprite";
 import { CharacterController } from "./characterController";
-import { V } from "../../core/utils/vector2";
-import {renderer} from "../engine";
+import { Item } from "./item";
 
 type CharacterSpriteStates = {
     idle: string;
@@ -10,7 +11,8 @@ type CharacterSpriteStates = {
 }
 
 export class Character extends CharacterController {
-    private spriteGroup!: SpriteGroup<CharacterSpriteStates>;
+    public spriteGroup!: SpriteGroup<CharacterSpriteStates>;
+    public equippedItem?: Item;
 
     constructor(private spriteName: string) {
         super();
@@ -39,9 +41,9 @@ export class Character extends CharacterController {
 
     private initSpriteGroupConditions() {
         const { spriteGroup } = this;
-        const { dt } = renderer;
 
         const runIdleCondition = (state: 'run' | 'idle') => {
+            const { dt } = renderer;
             if (!this.isOnGround) return false;
 
             const { spriteGroup } = this;
@@ -67,5 +69,26 @@ export class Character extends CharacterController {
     public update() {
         super.update();
         this.spriteGroup.render(...V.asArray(this.position));
+        this.updateEquippedItem();
+    }
+
+    public equipItem(item: Item) {
+        this.unequipCurrentItem();
+
+        item.equipFor(this);
+        this.equippedItem = item;
+    }
+
+    public unequipCurrentItem() {
+        if (!this.equippedItem) return;
+        this.equippedItem.unequip();
+        this.equippedItem = undefined;
+    }
+
+    public updateEquippedItem() {
+        const { equippedItem } = this;
+        if (!equippedItem) return;
+
+        equippedItem.updateEquipped();
     }
 }

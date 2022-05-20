@@ -75,6 +75,8 @@ export class VUpdate {
         const m = V.mag(this.v);
         this.v.x /= m;
         this.v.y /= m;
+
+        return this;
     }
 
     done() {
@@ -96,6 +98,39 @@ export class VUpdate {
             .done();
 
         return this.sub(step);
+    }
+
+    rotate(a: number) {
+        const length = V.mag(this.v);
+        const b = V.angle(this.v) + a;
+        const ref = V.fromAngle(b, length);
+        this.v.x = ref.x;
+        this.v.y = ref.y;
+        return this;
+    }
+
+    reflect(no: Vector2) {
+        // Vnew = -2*(V dot N)*N + V
+        const { v } = this;
+        const n = V.normalize(no);
+
+        const r = V.sub(v, V.mul(n, 2 * V.dot(v, n)));
+
+        return this.set(r);
+    }
+
+    round() {
+        this.v.x = Math.round(this.v.x);
+        this.v.y = Math.round(this.v.y);
+
+        return this;
+    }
+
+    floor() {
+        this.v.x = Math.floor(this.v.x);
+        this.v.y = Math.floor(this.v.y);
+
+        return this;
     }
 }
 
@@ -213,11 +248,46 @@ export class V {
         };
     }
 
+    static normalize(a: Vector2) {
+        const m = V.mag(a);
+        return {
+            x: a.x / m,
+            y: a.y / m,
+        };
+    }
+
     static asArray(n: Vector2): [number, number] {
         return [ n.x, n.y ];
     }
 
     static fromArray([x, y]: [number, number]) {
         return { x, y };
+    }
+
+    static angle(a: Vector2) {
+        return Math.atan2(a.y, a.x);
+    }
+
+    static normal(v: Vector2) {
+        return {
+            x: v.y,
+            y: -v.x,
+        };
+    }
+
+    static addRight(a: Vector2, length = 1) {
+        const b = V.angle(a) + Math.PI / 2;
+        return V.add(a, V.fromAngle(b, length));
+    }
+
+    static fromAngle(rad: number, length = 1) {
+        return {
+            x: Math.cos(rad) * length,
+            y: Math.sin(rad) * length,
+        };
+    }
+
+    static dot(a: Vector2, b: Vector2) {
+        return a.x * b.x + a.y * b.y;
     }
 };

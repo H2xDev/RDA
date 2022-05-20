@@ -1,22 +1,29 @@
+import { EventEmitter } from "./event";
 import { Scene, SceneEvents } from "./scene";
 
-export class SceneController {
-    private currentScene!: Scene;
+export enum SceneControllerEvent {
+    SCENE_CHANGED = 'sceneChanged',
+}
+
+export class SceneController extends EventEmitter<SceneControllerEvent> {
+    public currentScene!: Scene;
 
     constructor() {
+        super();
         this.update = this.update.bind(this);
     }
 
-    update() {
+    public update() {
         if (this.currentScene) {
             this.currentScene.update();
         }
     }
 
-    load(scene: Scene) {
+    public load(scene: Scene) {
         this.destroyScene();
         this.setScene(scene);
         this.currentScene.trigger(SceneEvents.LOAD);
+        this.trigger(SceneControllerEvent.SCENE_CHANGED, scene);
     }
 
     private destroyScene() {

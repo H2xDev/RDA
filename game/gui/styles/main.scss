@@ -1,0 +1,70 @@
+@import 'fonts';
+
+.card {
+	display: flex;
+	border-radius: 3px;
+	background-color: #fff;
+	padding: 10px;
+	background-color: white;
+	gap: 5px;
+	color: #000;
+
+	&__heading {
+		margin-bottom: 5px;
+	}
+}
+
+.fullsize {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.bg-filter {
+	backdrop-filter: grayscale(100);
+	background-color: rgba(#000, .5);
+	transition: 0.25s;
+
+	&-enter,
+	&-leave-to {
+		backdrop-filter: none;
+		transform: scale(1.03);
+		opacity: 0;
+	}
+}
+
+.button {
+	@extend .card;
+	background-color: rgba(#000, .9);
+	transition: .25s cubic-bezier(0,.76,.22,1.25);
+	color: #fff;
+	font-family: inherit;
+	font-size: 12px;
+	padding: 5px 10px;
+	border: 1px solid transparent;
+
+	&:hover {
+		border-color: #5af;
+		background-color: darken(#5af, 50%);
+		color: #5af;
+	}
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+
+	.button + .button { margin-left: 10px };
+}
+
+body {
+	font-size: 12px;
+	font-family: 'Telegrama';
+	image-rendering: pixelated;
+}
+
+p {
+	margin: 0;
+}

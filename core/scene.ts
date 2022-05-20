@@ -14,7 +14,8 @@ export type WithCamera<Scene> = Scene & {
 };
 
 export class Scene extends EventEmitter<SceneEvents> {
-    private children: ChildrenList = {};
+    public children: ChildrenList = {};
+    public meta: { [k: string]: any } = {};
 
     constructor() {
         super();

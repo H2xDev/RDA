@@ -3,12 +3,12 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "game/maps/map2.json",
+    "activeFile": "game/maps/map1.json",
     "expandedProjectPaths": [
         "game/editor",
+        "game/editor/templates",
         "game",
-        "game/maps",
-        "game/editor/templates"
+        "game/maps"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -17,11 +17,11 @@
             "scaleInEditor": 1
         },
         "game/maps/map1.json": {
-            "scale": 0.5,
-            "selectedLayer": 0,
+            "scale": 16,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 1136,
-                "y": 307
+                "x": 829.1875,
+                "y": 289.25
             }
         },
         "game/maps/map1.json#base": {
@@ -32,11 +32,11 @@
             "scaleInDock": 1
         },
         "game/maps/map2.json": {
-            "scale": 0.33,
-            "selectedLayer": 0,
+            "scale": 3,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 487.87878787878776,
-                "y": 568.1818181818182
+                "x": 580,
+                "y": 276.16666666666663
             }
         },
         "game/maps/map2.json#base": {
@@ -78,6 +78,7 @@
     "last.objectTemplatePath": "D:/Projects/rda/game/editor/templates",
     "last.worldFilePath": "D:/Projects/rda/game/maps",
     "loadedWorlds": [
+        "D:/Projects/rda/game/maps/rdworld.json",
         "D:/Projects/rda/game/maps/rdworld.world"
     ],
     "map.height": 30,
@@ -90,11 +91,11 @@
         "game/maps/map1.json"
     ],
     "project": "padGame.tiled-project",
-    "property.type": "object",
+    "property.type": "string",
     "recentFiles": [
         "game/editor/tools.tsx",
-        "game/maps/map1.json",
         "game/maps/map2.json",
+        "game/maps/map1.json",
         "game/maps/template.tmj",
         "game/maps/map2.tmj"
     ],

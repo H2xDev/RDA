@@ -97,4 +97,10 @@ export class Camera extends Entity {
         c.scale(...this.actualZoom);
         c.translate(-this.position.x, -this.position.y);
     }
+
+    public resetPosition() {
+        if (!this.entityToFollow) return;
+
+        V.update(this.position).set(this.entityToFollow?.position);
+    }
 }

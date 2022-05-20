@@ -22,7 +22,7 @@ const DEFAULT_SPRITE_OPTIONS: Partial<SpriteOptions> = {
 }
 
 export default class Sprite extends Resource {
-    private image = new Image();
+    public image = new Image();
     public options!: SpriteOptions;
     
     public speed = 1;
